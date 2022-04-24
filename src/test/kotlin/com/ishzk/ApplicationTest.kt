@@ -25,6 +25,8 @@ import io.ktor.client.statement.*
 import kotlin.test.*
 import io.ktor.server.testing.*
 import com.ishzk.plugins.*
+import io.ktor.client.plugins.websocket.*
+import io.ktor.client.plugins.websocket.WebSockets
 
 class ApplicationTest {
     @Test
@@ -32,6 +34,19 @@ class ApplicationTest {
         client.get("/").apply {
             assertEquals(HttpStatusCode.OK, status)
             assertEquals("Hello World!", bodyAsText())
+        }
+    }
+
+    @Test
+    fun testWebsocket() = testApplication {
+        val client = client.config {
+            install(WebSockets)
+        }
+        client.ws("/") {
+            val sendMessage = "connected"
+            outgoing.send(Frame.Text(sendMessage))
+            val othersMessage = incoming.receive() as? Frame.Text ?: return@ws
+            assertEquals("YOU SAID: $sendMessage", othersMessage.readText())
         }
     }
 }
